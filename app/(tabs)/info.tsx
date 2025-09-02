@@ -1,11 +1,11 @@
-import { StyleSheet, View, Text, Image, Button, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
-import { WebView } from 'react-native-webview';
 import * as Linking from 'expo-linking';
+import { useRouter } from 'expo-router';
+import { Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 export default function InfoScreen() {
   const router = useRouter();
-
+  //test rani  putang inang yan
   // Social links
   const tiktokUrl = "https://www.tiktok.com/@jamesarthur23";
   const youtubeUrl = "https://www.youtube.com/channel/UCz4tgANd4yy8Oe0iXCdSWfA";

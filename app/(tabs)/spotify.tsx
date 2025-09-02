@@ -55,6 +55,7 @@ export default function SpotifyLogin() {
         <Text style={styles.footerText}>Don't have an account? </Text>
         <TouchableOpacity onPress={() => router.push("/signup")}>
           <Text style={styles.footerLink}>Sign Up</Text>
+
         </TouchableOpacity>
       </View>
     </ThemedView>

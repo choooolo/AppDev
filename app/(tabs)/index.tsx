@@ -28,11 +28,11 @@ export default function HomeScreen() {
        >
           Cars Outside
        </ThemedText>
-
-
-        <Button title="Go to My Info" onPress={() => router.push("/info")} />
+        <ThemedView style={styles.buttonRow}>
+          <Button title="Go to My Info" onPress={() => router.push("/info")} />
+          <Button title="Spotify" onPress={() => router.push("/spotify")} />
+        </ThemedView>
       </ThemedView>
-
       <ThemedView style={styles.stepContainer}>
         <ThemedText style={styles.lyricsText}>
           {`I'm packin' my bags that I didn't unpack the last time
@@ -126,4 +126,11 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     color: 'white',
   },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginTop: 10,
+  },
+
 });

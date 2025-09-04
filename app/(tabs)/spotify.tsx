@@ -32,7 +32,13 @@ export default function SpotifyLogin() {
       </TouchableOpacity>
 
       {/* Sign In Button */}
-      <TouchableOpacity style={styles.signInButton} onPress={() => alert("Signing in...")}>
+      <TouchableOpacity
+        style={styles.signInButton}
+        onPress={() => {
+          alert("Signing in...");
+          router.push("/homescreen"); // 👈 this navigates to your homepage
+        }}
+      >
         <Text style={styles.signInText}>Sign In</Text>
       </TouchableOpacity>
 

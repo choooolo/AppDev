@@ -1,119 +1,190 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Image,
+} from "react-native";
+import { useRouter } from "expo-router";
 
-export default function Signup() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
-  const [dob, setDob] = useState("");
+export default function SignupScreen() {
+  const router = useRouter();
   const [gender, setGender] = useState("");
 
   return (
-    <ScrollView className="flex-1 bg-black px-6 pt-12">
-      {/* Header */}
-      <Text className="text-white text-3xl font-bold text-center mb-6">
-        Sign up for free to start listening
-      </Text>
-
-      {/* Social Buttons */}
-      <TouchableOpacity className="bg-[#1877F2] rounded-full py-3 mb-3">
-        <Text className="text-white text-center font-semibold">
-          Sign up with Facebook
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity className="border border-gray-400 rounded-full py-3 mb-6">
-        <Text className="text-white text-center font-semibold">
-          Sign up with Google
-        </Text>
-      </TouchableOpacity>
-
-      {/* Divider */}
-      <View className="flex-row items-center mb-6">
-        <View className="flex-1 h-[1px] bg-gray-600" />
-        <Text className="text-gray-400 mx-3">or</Text>
-        <View className="flex-1 h-[1px] bg-gray-600" />
-      </View>
-
-      {/* Email */}
-      <Text className="text-white text-base font-bold mb-2">What's your email?</Text>
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Enter your email"
-        placeholderTextColor="#aaa"
-        className="bg-white text-black px-4 py-3 rounded-md mb-6"
+    <View style={styles.container}>
+      {/* Spotify Logo */}
+      <Image
+        source={require("@/assets/images/spotify.png")} // place your Spotify logo here
+        style={styles.logo}
+        resizeMode="contain"
       />
 
-      {/* Password */}
-      <Text className="text-white text-base font-bold mb-2">Create a password</Text>
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Create a password"
-        placeholderTextColor="#aaa"
-        secureTextEntry
-        className="bg-white text-black px-4 py-3 rounded-md mb-6"
-      />
+      {/* Title */}
+      <Text style={styles.title}>Spotify</Text>
 
-      {/* Name */}
-      <Text className="text-white text-base font-bold mb-2">What should we call you?</Text>
-      <TextInput
-        value={name}
-        onChangeText={setName}
-        placeholder="Enter a profile name"
-        placeholderTextColor="#aaa"
-        className="bg-white text-black px-4 py-3 rounded-md mb-6"
-      />
+      {/* Input Fields */}
+      <TextInput style={styles.input} placeholder="Email Address" placeholderTextColor="#aaa" />
+      <TextInput style={styles.input} placeholder="Full Name" placeholderTextColor="#aaa" />
+      <TextInput style={styles.input} placeholder="Password" placeholderTextColor="#aaa" secureTextEntry />
 
       {/* Date of Birth */}
-      <Text className="text-white text-base font-bold mb-2">What's your date of birth?</Text>
-      <TextInput
-        value={dob}
-        onChangeText={setDob}
-        placeholder="DD/MM/YYYY"
-        placeholderTextColor="#aaa"
-        className="bg-white text-black px-4 py-3 rounded-md mb-6"
-      />
-
-      {/* Gender */}
-      <Text className="text-white text-base font-bold mb-2">What's your gender?</Text>
-      <View className="flex-row justify-between mb-6">
-        {["Male", "Female", "Non-binary"].map((option) => (
-          <TouchableOpacity
-            key={option}
-            onPress={() => setGender(option)}
-            className={`px-5 py-3 rounded-full border ${
-              gender === option ? "bg-green-500 border-green-500" : "border-gray-500"
-            }`}
-          >
-            <Text
-              className={`font-semibold ${
-                gender === option ? "text-black" : "text-white"
-              }`}
-            >
-              {option}
-            </Text>
-          </TouchableOpacity>
-        ))}
+      <View style={styles.dobContainer}>
+        <Text style={styles.label}>Date of Birth :</Text>
+        <TextInput style={styles.dobInput} placeholder="DD" placeholderTextColor="#aaa" keyboardType="numeric" />
+        <TextInput style={styles.dobInput} placeholder="MM" placeholderTextColor="#aaa" keyboardType="numeric" />
+        <TextInput style={styles.dobInput} placeholder="YY" placeholderTextColor="#aaa" keyboardType="numeric" />
       </View>
 
-      {/* Terms & Conditions */}
-      <Text className="text-gray-400 text-xs mb-6">
-        By signing up, you agree to Spotify’s Terms of Service and Privacy Policy.
-      </Text>
+      {/* Gender Selection */}
+      <View style={styles.genderContainer}>
+        <TouchableOpacity
+          style={[styles.genderButton, gender === "Male" && styles.selectedGender]}
+          onPress={() => setGender("Male")}
+        >
+          <Text style={styles.genderText}>Male</Text>
+        </TouchableOpacity>
 
-      {/* Submit Button */}
-      <TouchableOpacity className="bg-green-500 rounded-full py-4 mb-6">
-        <Text className="text-black text-center font-bold text-base">Sign Up</Text>
-      </TouchableOpacity>
-
-      {/* Footer */}
-      <View className="flex-row justify-center mb-10">
-        <Text className="text-gray-400">Already have an account? </Text>
-        <TouchableOpacity>
-          <Text className="text-white font-semibold">Log in</Text>
+        <TouchableOpacity
+          style={[styles.genderButton, gender === "Female" && styles.selectedGender]}
+          onPress={() => setGender("Female")}
+        >
+          <Text style={styles.genderText}>Female</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      {/* Sign Up Button */}
+      <TouchableOpacity style={styles.signupButton}>
+        <Text style={styles.signupText}>Sign Up</Text>
+      </TouchableOpacity>
+
+      {/* Sign up with */}
+      <Text style={styles.signUpWith}>Sign Up With</Text>
+      <View style={styles.socialContainer}>
+        <TouchableOpacity style={styles.socialButton}>
+          <Text style={styles.socialText}>f</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.socialButton}>
+          <Text style={styles.socialText}>G</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Already have an account */}
+      <TouchableOpacity onPress={() => router.push("/spotify")}>
+        <Text style={styles.signInText}>
+          Already have an account? <Text style={styles.link}>Sign In</Text>
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "black",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  logo: {
+    width: 60,
+    height: 60,
+    marginBottom: 10,
+  },
+  title: {
+    color: "white",
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+  input: {
+    width: "100%",
+    backgroundColor: "#111",
+    color: "white",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  dobContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    width: "100%",
+  },
+  label: {
+    color: "white",
+    marginRight: 10,
+  },
+  dobInput: {
+    flex: 1,
+    backgroundColor: "#111",
+    color: "white",
+    padding: 10,
+    marginHorizontal: 4,
+    borderRadius: 8,
+    textAlign: "center",
+  },
+  genderContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "60%",
+    marginBottom: 20,
+  },
+  genderButton: {
+    borderWidth: 1,
+    borderColor: "gray",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  selectedGender: {
+    borderColor: "#1DB954",
+    backgroundColor: "#1DB95420",
+  },
+  genderText: {
+    color: "white",
+  },
+  signupButton: {
+    backgroundColor: "#1DB954",
+    width: "100%",
+    paddingVertical: 15,
+    borderRadius: 30,
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  signupText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  signUpWith: {
+    color: "white",
+    marginBottom: 10,
+  },
+  socialContainer: {
+    flexDirection: "row",
+    gap: 20,
+    marginBottom: 20,
+  },
+  socialButton: {
+    width: 28,
+    height: 28,
+    tintColor: "white",
+  },
+  socialText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  signInText: {
+    color: "white",
+    marginTop: 10,
+  },
+  link: {
+    color: "#1DB954",
+    fontWeight: "bold",
+  },
+});

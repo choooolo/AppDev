@@ -38,22 +38,28 @@ export default function SignupScreen() {
         <TextInput style={styles.dobInput} placeholder="YY" placeholderTextColor="#aaa" keyboardType="numeric" />
       </View>
 
-      {/* Gender Selection */}
-      <View style={styles.genderContainer}>
-        <TouchableOpacity
-          style={[styles.genderButton, gender === "Male" && styles.selectedGender]}
-          onPress={() => setGender("Male")}
-        >
-          <Text style={styles.genderText}>Male</Text>
-        </TouchableOpacity>
+         {/* Gender */}
+            <Text style={styles.label}>Gender</Text>
+            <View style={styles.genderContainer}>
+              {["Male", "Female"].map((g) => (
+                <TouchableOpacity
+                  key={g}
+                  style={styles.genderOption}
+                  onPress={() => setGender(g)}
+                >
+                  <View
+                    style={[
+                      styles.radioOuter,
+                      gender === g && styles.radioOuterSelected,
+                    ]}
+                  >
+                    {gender === g && <View style={styles.radioInner} />}
+                  </View>
+                  <Text style={styles.genderText}>{g}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-        <TouchableOpacity
-          style={[styles.genderButton, gender === "Female" && styles.selectedGender]}
-          onPress={() => setGender("Female")}
-        >
-          <Text style={styles.genderText}>Female</Text>
-        </TouchableOpacity>
-      </View>
 
       {/* Sign Up Button */}
       <TouchableOpacity style={styles.signupButton}>
@@ -127,26 +133,41 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     textAlign: "center",
   },
-  genderContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "60%",
-    marginBottom: 20,
-  },
-  genderButton: {
-    borderWidth: 1,
-    borderColor: "gray",
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  selectedGender: {
-    borderColor: "#1DB954",
-    backgroundColor: "#1DB95420",
-  },
-  genderText: {
-    color: "white",
-  },
+    genderContainer: {
+      flexDirection: "row",
+      justifyContent: "space-around",
+      width: "100%",
+      marginBottom: 20,
+    },
+    genderOption: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    radioOuter: {
+      height: 24,              // ⬆️ slightly bigger
+      width: 24,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: "#A7A7A7",
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 8,
+      backgroundColor: "black", // ⬅️ makes border visible
+    },
+    radioOuterSelected: {
+      borderColor: "#1DB954",
+    },
+    radioInner: {
+      height: 12,              // ⬆️ matches outer
+      width: 12,
+      borderRadius: 6,
+      backgroundColor: "#1DB954",
+    },
+    genderText: {
+      color: "white",
+      fontSize: 16,
+    },
+
   signupButton: {
     backgroundColor: "#1DB954",
     width: "100%",

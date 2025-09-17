@@ -1,6 +1,7 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import {
   Image,
   Modal,
@@ -11,7 +12,80 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated, {
+  Layout,
+  SlideOutLeft
+} from "react-native-reanimated";
 
+// ---------------- Reducer for Undo/Redo -----------------
+type State = {
+  past: any[];
+  present: any[];
+  future: any[];
+};
+
+type Action =
+  | { type: "ADD_PLAYLIST"; payload: any }
+  | { type: "REMOVE_PLAYLIST"; payload: string }
+  | { type: "CLEAR" }
+  | { type: "UNDO" }
+  | { type: "REDO" }
+  | { type: "SET_STATE"; payload: any[] };
+
+const initialState: State = {
+  past: [],
+  present: [],
+  future: [],
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "ADD_PLAYLIST":
+      return {
+        past: [...state.past, state.present],
+        present: [...state.present, action.payload],
+        future: [],
+      };
+    case "REMOVE_PLAYLIST":
+      return {
+        past: [...state.past, state.present],
+        present: state.present.filter((pl) => pl.id !== action.payload),
+        future: [],
+      };
+    case "CLEAR":
+      return {
+        past: [...state.past, state.present],
+        present: [],
+        future: [],
+      };
+    case "UNDO": {
+      if (state.past.length === 0) return state;
+      const previous = state.past[state.past.length - 1];
+      const newPast = state.past.slice(0, -1);
+      return {
+        past: newPast,
+        present: previous,
+        future: [state.present, ...state.future],
+      };
+    }
+    case "REDO": {
+      if (state.future.length === 0) return state;
+      const next = state.future[0];
+      const newFuture = state.future.slice(1);
+      return {
+        past: [...state.past, state.present],
+        present: next,
+        future: newFuture,
+      };
+    }
+    case "SET_STATE":
+      return { ...state, present: action.payload };
+    default:
+      return state;
+  }
+}
+
+// ---------------- Component -----------------
 export default function ProfileScreen() {
   const router = useRouter();
 
@@ -19,32 +93,54 @@ export default function ProfileScreen() {
   const [name, setName] = useState("Your Name");
   const [username, setUsername] = useState("@username");
 
-  // Modal state for profile editing
+  // Profile edit modal
   const [isModalVisible, setModalVisible] = useState(false);
   const [tempName, setTempName] = useState(name);
   const [tempUsername, setTempUsername] = useState(username);
 
-  // Playlists state
-  const [playlists, setPlaylists] = useState([
-    {
-      id: "1",
-      title: "Liked Songs",
-      cover: "https://misc.scdn.co/liked-songs/liked-songs-300.jpg",
-      songs: 1234,
-    },
-    {
-      id: "2",
-      title: "Workout Mix",
-      cover:
-        "https://i.scdn.co/image/ab67706f0000000200c9055ea56a14e14975ec1d",
-      songs: 98,
-    },
-  ]);
-
-  // Modal for adding playlist
+  // Playlist modal
   const [isPlaylistModalVisible, setPlaylistModalVisible] = useState(false);
   const [newPlaylistTitle, setNewPlaylistTitle] = useState("");
   const [newPlaylistCover, setNewPlaylistCover] = useState("");
+
+  // Reducer
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  // Load from storage
+  useEffect(() => {
+    const loadData = async () => {
+      const stored = await AsyncStorage.getItem("playlists");
+      if (stored) {
+        dispatch({ type: "SET_STATE", payload: JSON.parse(stored) });
+      } else {
+        // seed with defaults
+        dispatch({
+          type: "SET_STATE",
+          payload: [
+            {
+              id: "1",
+              title: "Liked Songs",
+              cover: "https://misc.scdn.co/liked-songs/liked-songs-300.jpg",
+              songs: 1234,
+            },
+            {
+              id: "2",
+              title: "Workout Mix",
+              cover:
+                "https://i.scdn.co/image/ab67706f0000000200c9055ea56a14e14975ec1d",
+              songs: 98,
+            },
+          ],
+        });
+      }
+    };
+    loadData();
+  }, []);
+
+  // Save to storage whenever state.present changes
+  useEffect(() => {
+    AsyncStorage.setItem("playlists", JSON.stringify(state.present));
+  }, [state.present]);
 
   // Confirm profile changes
   const handleConfirm = () => {
@@ -62,10 +158,20 @@ export default function ProfileScreen() {
       cover: newPlaylistCover || "https://via.placeholder.com/150",
       songs: 0,
     };
-    setPlaylists([...playlists, newPlaylist]);
+    dispatch({ type: "ADD_PLAYLIST", payload: newPlaylist });
     setNewPlaylistTitle("");
     setNewPlaylistCover("");
     setPlaylistModalVisible(false);
+  };
+
+  // Remove playlist
+  const removePlaylist = (id: string) => {
+    dispatch({ type: "REMOVE_PLAYLIST", payload: id });
+  };
+
+  // Clear playlists
+  const clearPlaylists = () => {
+    dispatch({ type: "CLEAR" });
   };
 
   return (
@@ -97,25 +203,48 @@ export default function ProfileScreen() {
 
       {/* Playlists Section */}
       <View style={styles.section}>
-        <View
-          style={{ flexDirection: "row", justifyContent: "space-between" }}
-        >
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <Text style={styles.sectionTitle}>Playlists</Text>
-          <TouchableOpacity onPress={() => setPlaylistModalVisible(true)}>
-            <Text style={{ color: "#1DB954", fontSize: 26 }}>＋</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row" }}>
+            <TouchableOpacity onPress={() => setPlaylistModalVisible(true)}>
+              <Text style={{ color: "#1DB954", fontSize: 26, marginRight: 12 }}>
+                ＋
+              </Text>
+            </TouchableOpacity>
+            
+          </View>
         </View>
 
-        {playlists.map((pl) => (
-          <View key={pl.id} style={styles.card}>
-            <Image source={{ uri: pl.cover }} style={styles.cardImage} />
-            <View style={styles.cardInfo}>
-              <Text style={styles.cardTitle}>{pl.title}</Text>
-              <Text style={styles.cardSubtitle}>{pl.songs} songs</Text>
-            </View>
-          </View>
+        {state.present.map((pl) => (
+          <Animated.View
+            key={pl.id}
+            style={styles.card}
+            exiting={SlideOutLeft.duration(400)} // slide out when removed
+            layout={Layout.springify()} // smooth layout change
+          >
+            <TouchableOpacity
+              style={{ flexDirection: "row", flex: 1 }}
+              onPress={() =>
+                router.push({
+                  pathname: "/PlaylistDetail",
+                  params: { id: pl.id, title: pl.title },
+                })
+              }
+            >
+              <Image source={{ uri: pl.cover }} style={styles.cardImage} />
+              <View style={styles.cardInfo}>
+                <Text style={styles.cardTitle}>{pl.title}</Text>
+                <Text style={styles.cardSubtitle}>{pl.songs} songs</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => removePlaylist(pl.id)}>
+              <Text style={{ color: "red", fontSize: 14 }}>Remove</Text>
+            </TouchableOpacity>
+          </Animated.View>
         ))}
       </View>
+
+      
 
       {/* Artists Section */}
       <View style={styles.section}>
@@ -209,66 +338,64 @@ export default function ProfileScreen() {
       </Modal>
 
       {/* Playlist Add Modal */}
-      {/* Playlist Add Modal */}
-<Modal transparent visible={isPlaylistModalVisible} animationType="slide">
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalContainer}>
-      <Text style={styles.modalTitle}>New Playlist</Text>
+      <Modal transparent visible={isPlaylistModalVisible} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>New Playlist</Text>
 
-      {/* Playlist Name Input */}
-      <TextInput
-        style={styles.input}
-        placeholder="Playlist name"
-        placeholderTextColor="#aaa"
-        value={newPlaylistTitle}
-        onChangeText={setNewPlaylistTitle}
-      />
+            {/* Playlist Name Input */}
+            <TextInput
+              style={styles.input}
+              placeholder="Playlist name"
+              placeholderTextColor="#aaa"
+              value={newPlaylistTitle}
+              onChangeText={setNewPlaylistTitle}
+            />
 
-      {/* Upload Cover Image */}
-      <TouchableOpacity
-        style={styles.uploadButton}
-        onPress={async () => {
-          const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 1,
-          });
+            {/* Upload Cover Image */}
+            <TouchableOpacity
+              style={styles.uploadButton}
+              onPress={async () => {
+                const result = await ImagePicker.launchImageLibraryAsync({
+                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                  allowsEditing: true,
+                  aspect: [1, 1],
+                  quality: 1,
+                });
 
-          if (!result.canceled) {
-            setNewPlaylistCover(result.assets[0].uri);
-          }
-        }}
-      >
-        <Text style={{ color: "white", fontWeight: "bold" }}>
-          {newPlaylistCover ? "Change Cover Image" : "Upload Cover Image"}
-        </Text>
-      </TouchableOpacity>
+                if (!result.canceled) {
+                  setNewPlaylistCover(result.assets[0].uri);
+                }
+              }}
+            >
+              <Text style={{ color: "white", fontWeight: "bold" }}>
+                {newPlaylistCover ? "Change Cover Image" : "Upload Cover Image"}
+              </Text>
+            </TouchableOpacity>
 
-      {/* Preview selected cover */}
-      {newPlaylistCover ? (
-        <Image
-          source={{ uri: newPlaylistCover }}
-          style={{ width: 80, height: 80, borderRadius: 8, marginTop: 10 }}
-        />
-      ) : null}
+            {/* Preview selected cover */}
+            {newPlaylistCover ? (
+              <Image
+                source={{ uri: newPlaylistCover }}
+                style={{ width: 80, height: 80, borderRadius: 8, marginTop: 10 }}
+              />
+            ) : null}
 
-      {/* Buttons */}
-      <View style={styles.modalButtons}>
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => setPlaylistModalVisible(false)}
-        >
-          <Text style={styles.modalButtonText}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.confirmButton} onPress={addPlaylist}>
-          <Text style={styles.modalButtonText}>Add</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
-
+            {/* Buttons */}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setPlaylistModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmButton} onPress={addPlaylist}>
+                <Text style={styles.modalButtonText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -340,13 +467,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   uploadButton: {
-  backgroundColor: "#333",
-  padding: 10,
-  borderRadius: 8,
-  alignItems: "center",
-  marginBottom: 12,
-},
-
+    backgroundColor: "#333",
+    padding: 10,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
   modalContainer: {
     backgroundColor: "#222",
     padding: 20,

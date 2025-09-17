@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View, Text, FlatList, Image, TouchableOpacity } from "react-native";
+import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const playlists = [
   { id: "1", title: "Chill Vibes", cover: require("@/assets/images/chillvibes.webp") },
@@ -28,7 +28,7 @@ export default function PlaylistsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1,  
     backgroundColor: "#121212",
     padding: 20,
   },
@@ -57,4 +57,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "500",
   },
+  
 });

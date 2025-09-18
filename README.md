@@ -5,6 +5,6 @@ Spotify Activity Screenshots
 <img width="150" height="290" alt="image" src="https://github.com/user-attachments/assets/10251ca4-9888-4a6e-a813-d65d7d61e95c" />
 <img width="150" height="290" alt="image" src="https://github.com/user-attachments/assets/863ff8ed-3fdc-4a9b-9fd5-05d2115bffdd" />
 <img width="150" height="290" alt="image" src="https://github.com/user-attachments/assets/3dc45f27-781d-4d16-b3ef-4738045eae0d" />
-
+<img width="150" height="290" alt="Image_20250918_135218_801" src="https://github.com/user-attachments/assets/f6b7c951-0c8f-47ec-9e31-f4a8e01bda2c" />
 
 

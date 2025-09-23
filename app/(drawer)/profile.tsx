@@ -1,3 +1,6 @@
+// profile.tsx
+import { RootState } from "@/store";
+import { darkTheme, lightTheme } from "@/theme";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
@@ -22,6 +25,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from "react-native-reanimated";
+import { useSelector } from "react-redux";
 
 // ---------------- Reducer for Undo/Redo -----------------
 type State = {
@@ -91,9 +95,126 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-// ---------------- Component -----------------
+// style factory (needs theme values from inside component)
+const createStyles = (opts: {
+  themeBackground: string;
+  themeText: string;
+  cardBg: string;
+  inputBg: string;
+  subText: string;
+  borderColor: string;
+}) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: opts.themeBackground, padding: 16 },
+    header: { alignItems: "center", marginBottom: 20 },
+    profileImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 10 },
+    profileName: { color: opts.themeText, fontSize: 22, fontWeight: "bold" },
+    profileUsername: { color: opts.subText, fontSize: 14 },
+    buttonRow: { flexDirection: "row", justifyContent: "center", marginBottom: 20 },
+    followButton: {
+      backgroundColor: "#1DB954",
+      paddingVertical: 8,
+      paddingHorizontal: 20,
+      borderRadius: 20,
+      marginRight: 10,
+    },
+    moreButton: {
+      backgroundColor: opts.cardBg,
+      paddingVertical: 8,
+      paddingHorizontal: 15,
+      borderRadius: 20,
+      marginLeft: 10,
+    },
+    buttonText: { color: opts.themeText, fontSize: 14, fontWeight: "bold" },
+    section: { marginBottom: 20 },
+    sectionTitle: { color: opts.themeText, fontSize: 18, fontWeight: "bold", marginBottom: 10 },
+    errorText: { color: "red", fontSize: 12, marginTop: 4 },
+    input: {
+      backgroundColor: opts.inputBg,
+      color: opts.themeText,
+      padding: 10,
+      borderRadius: 8,
+      marginBottom: 12,
+    },
+    submitBtn: { backgroundColor: "#1DB954", paddingVertical: 12, borderRadius: 8 },
+    card: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 12,
+      backgroundColor: opts.cardBg,
+      padding: 10,
+      borderRadius: 10,
+    },
+    cardImage: { width: 60, height: 60, borderRadius: 4, marginRight: 10 },
+    cardInfo: { flex: 1 },
+    cardTitle: { color: opts.themeText, fontSize: 16, fontWeight: "bold" },
+    cardSubtitle: { color: opts.subText, fontSize: 12 },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.6)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContainer: {
+      backgroundColor: opts.cardBg,
+      padding: 20,
+      borderRadius: 10,
+      width: "90%",
+      maxWidth: 400,
+      alignSelf: "center",
+    },
+    modalContainerFixed: {
+      backgroundColor: opts.cardBg,
+      padding: 20,
+      borderRadius: 10,
+      width: "90%",
+      maxWidth: 400,
+      height: "70%",
+    },
+    uploadButton: {
+      backgroundColor: opts.cardBg,
+      padding: 10,
+      borderRadius: 8,
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    genreBtn: { paddingVertical: 6, paddingHorizontal: 12, backgroundColor: opts.cardBg, borderRadius: 20 },
+    genreBtnSelected: { backgroundColor: "#1DB954" },
+    genreText: { color: opts.themeText },
+    genreTextSelected: { color: "black", fontWeight: "700" },
+    modalTitle: { color: opts.themeText, fontSize: 18, fontWeight: "bold", marginBottom: 15 },
+    modalButtons: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
+    cancelButton: { marginRight: 10 },
+    confirmButton: { backgroundColor: "#1DB954", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8 },
+    modalButtonText: { color: opts.themeText, fontSize: 14, fontWeight: "bold" },
+    artistCard: { marginRight: 16, alignItems: "center" },
+    artistImage: { width: 80, height: 80, borderRadius: 40 },
+    artistName: { color: opts.themeText, marginTop: 6 },
+    settingsItem: { paddingVertical: 12, borderBottomColor: opts.borderColor, borderBottomWidth: 1 },
+  });
+
 export default function ProfileScreen() {
   const router = useRouter();
+
+  // read darkMode from Redux inside component
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
+  const theme = darkMode ? darkTheme : lightTheme;
+
+  // sensible derived colors / fallbacks
+  const cardBg = (theme as any).card ?? (darkMode ? "#222" : "#fff");
+  const inputBg = darkMode ? "#111" : "#f2f2f2";
+  const subText = (theme as any).subtext ?? (darkMode ? "#aaa" : "#666");
+  const borderColor = (theme as any).border ?? (darkMode ? "#333" : "#ddd");
+
+  // styles with theme in scope
+  const styles = createStyles({
+    themeBackground: theme.background,
+    themeText: theme.text,
+    cardBg,
+    inputBg,
+    subText,
+    borderColor,
+  });
 
   // Profile edit modal
   const [isModalVisible, setModalVisible] = useState(false);
@@ -103,8 +224,8 @@ export default function ProfileScreen() {
   const [newPlaylistTitle, setNewPlaylistTitle] = useState("");
   const [newPlaylistCover, setNewPlaylistCover] = useState("");
 
-  // Reducer
-  const [state, dispatch] = useReducer(reducer, initialState);
+  // Reducer (renamed dispatch to avoid confusion with redux)
+  const [state, playlistDispatch] = useReducer(reducer, initialState);
 
   // Form state
   const [form, setForm] = useState({
@@ -121,9 +242,7 @@ export default function ProfileScreen() {
 
   // Shake animation
   const shakeAnim = useSharedValue(0);
-  const shakeStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shakeAnim.value }],
-  }));
+  const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shakeAnim.value }] }));
   const triggerShake = () => {
     shakeAnim.value = withSequence(
       withTiming(-10, { duration: 50 }),
@@ -134,14 +253,14 @@ export default function ProfileScreen() {
     );
   };
 
-  // Load playlists from storage
+  // Load playlists + profile from storage
   useEffect(() => {
     const loadData = async () => {
       const storedPlaylists = await AsyncStorage.getItem("playlists");
       if (storedPlaylists) {
-        dispatch({ type: "SET_STATE", payload: JSON.parse(storedPlaylists) });
+        playlistDispatch({ type: "SET_STATE", payload: JSON.parse(storedPlaylists) });
       } else {
-        dispatch({
+        playlistDispatch({
           type: "SET_STATE",
           payload: [
             {
@@ -161,7 +280,6 @@ export default function ProfileScreen() {
         });
       }
 
-      // Load profile form
       const storedProfile = await AsyncStorage.getItem("profile_form");
       if (storedProfile) {
         setForm(JSON.parse(storedProfile));
@@ -170,12 +288,12 @@ export default function ProfileScreen() {
     loadData();
   }, []);
 
-  // Save playlists to storage
+  // persist playlists
   useEffect(() => {
     AsyncStorage.setItem("playlists", JSON.stringify(state.present));
   }, [state.present]);
 
-  // Save profile to storage
+  // Save profile handler
   const handleSubmit = async () => {
     if (errors.username || errors.email) {
       triggerShake();
@@ -202,14 +320,14 @@ export default function ProfileScreen() {
       cover: newPlaylistCover || "https://via.placeholder.com/150",
       songs: 0,
     };
-    dispatch({ type: "ADD_PLAYLIST", payload: newPlaylist });
+    playlistDispatch({ type: "ADD_PLAYLIST", payload: newPlaylist });
     setNewPlaylistTitle("");
     setNewPlaylistCover("");
     setPlaylistModalVisible(false);
   };
 
   const removePlaylist = (id: string) => {
-    dispatch({ type: "REMOVE_PLAYLIST", payload: id });
+    playlistDispatch({ type: "REMOVE_PLAYLIST", payload: id });
   };
 
   return (
@@ -233,48 +351,44 @@ export default function ProfileScreen() {
         <TouchableOpacity style={styles.followButton}>
           <Text style={styles.buttonText}>Follow</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.moreButton}
-          onPress={() => setModalVisible(true)}
-        >
+        <TouchableOpacity style={styles.moreButton} onPress={() => setModalVisible(true)}>
           <Text style={styles.buttonText}>•••</Text>
         </TouchableOpacity>
       </View>
 
-  
       {/* Artists Section */}
-<View style={styles.section}>
-  <Text style={styles.sectionTitle}>Artists You Follow</Text>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-    {[
-      {
-        name: "Drake",
-        uri: "https://i.scdn.co/image/ab6761610000e5eb4293385d324db8558179afd9",
-      },
-      {
-        name: "Taylor Swift",
-        uri: "https://i.scdn.co/image/ab6761610000e5ebe672b5f553298dcdccb0e676",
-      },
-      {
-        name: "Ed Sheeran",
-        uri: "https://i.scdn.co/image/ab67616d0000b2736567a393a964a845a89b7f70",
-      },
-      {
-        name: "Ariana Grande",
-        uri: "https://i.scdn.co/image/ab67616d0000b27355b8f4c3458e256eca14f18f",
-      },
-      {
-        name: "The Weeknd",
-        uri: "https://i.scdn.co/image/ab6761610000e5eb9e528993a2820267b97f6aae",
-      },
-    ].map((artist, i) => (
-      <View key={i} style={styles.artistCard}>
-        <Image source={{ uri: artist.uri }} style={styles.artistImage} />
-        <Text style={styles.artistName}>{artist.name}</Text>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Artists You Follow</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {[
+            {
+              name: "Drake",
+              uri: "https://i.scdn.co/image/ab6761610000e5eb4293385d324db8558179afd9",
+            },
+            {
+              name: "Taylor Swift",
+              uri: "https://i.scdn.co/image/ab6761610000e5ebe672b5f553298dcdccb0e676",
+            },
+            {
+              name: "Ed Sheeran",
+              uri: "https://i.scdn.co/image/ab67616d0000b2736567a393a964a845a89b7f70",
+            },
+            {
+              name: "Ariana Grande",
+              uri: "https://i.scdn.co/image/ab67616d0000b27355b8f4c3458e256eca14f18f",
+            },
+            {
+              name: "The Weeknd",
+              uri: "https://i.scdn.co/image/ab6761610000e5eb9e528993a2820267b97f6aae",
+            },
+          ].map((artist, i) => (
+            <View key={i} style={styles.artistCard}>
+              <Image source={{ uri: artist.uri }} style={styles.artistImage} />
+              <Text style={styles.artistName}>{artist.name}</Text>
+            </View>
+          ))}
+        </ScrollView>
       </View>
-    ))}
-  </ScrollView>
-</View>
 
       {/* Playlists Section */}
       <View style={styles.section}>
@@ -319,7 +433,7 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>Settings</Text>
         {["Account", "Notifications", "Privacy", "Help"].map((item) => (
           <TouchableOpacity key={item} style={styles.settingsItem}>
-            <Text style={{ color: "white", fontSize: 16 }}>{item}</Text>
+            <Text style={{ color: (theme as any).text, fontSize: 16 }}>{item}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -336,18 +450,22 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 style={styles.uploadButton}
                 onPress={async () => {
-                  const result = await ImagePicker.launchImageLibraryAsync({
-                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                    allowsEditing: true,
-                    aspect: [1, 1],
-                    quality: 1,
-                  });
-                  if (!result.canceled && result.assets && result.assets[0]?.uri) {
-                    setForm((prev) => ({ ...prev, profileImage: result.assets[0].uri }));
+                  try {
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                      allowsEditing: true,
+                      aspect: [1, 1],
+                      quality: 1,
+                    });
+                    if (!result.canceled && result.assets && result.assets[0]?.uri) {
+                      setForm((prev) => ({ ...prev, profileImage: result.assets[0].uri }));
+                    }
+                  } catch (e) {
+                    console.warn("Image pick failed", e);
                   }
                 }}
               >
-                <Text style={{ color: "white", fontWeight: "bold", textAlign: "center" }}>
+                <Text style={{ color: (theme as any).text, fontWeight: "bold", textAlign: "center" }}>
                   {form.profileImage ? "Change Profile Picture" : "Upload Profile Picture"}
                 </Text>
               </TouchableOpacity>
@@ -417,7 +535,7 @@ export default function ProfileScreen() {
               </Animated.View>
 
               {/* Genre */}
-              <Text style={{ color: "white", marginBottom: 8 }}>Favorite Genre</Text>
+              <Text style={{ color: (theme as any).text, marginBottom: 8 }}>Favorite Genre</Text>
               <View style={{ flexDirection: "row", flexWrap: "wrap", marginBottom: 12 }}>
                 {["Pop", "Rock", "Jazz", "Hip-Hop"].map((g) => {
                   const selected = form.genre === g;
@@ -436,18 +554,18 @@ export default function ProfileScreen() {
               {/* Buttons */}
               <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 16 }}>
                 <TouchableOpacity onPress={handleSubmit} style={[styles.submitBtn, { flex: 1, marginRight: 8 }]}>
-                  <Text style={{ color: "white", fontWeight: "700", textAlign: "center" }}>Save Profile</Text>
+                  <Text style={{ color: (theme as any).text, fontWeight: "700", textAlign: "center" }}>Save Profile</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => {
+                  onPress={async () => {
                     setForm({ name: "", username: "", email: "", genre: "", profileImage: "" });
                     setErrors({ username: "", email: "" });
-                    AsyncStorage.removeItem("profile_form");
+                    await AsyncStorage.removeItem("profile_form");
                   }}
                   style={[styles.submitBtn, { backgroundColor: "#444", flex: 1, marginLeft: 8 }]}
                 >
-                  <Text style={{ color: "white", fontWeight: "700", textAlign: "center" }}>Reset</Text>
+                  <Text style={{ color: (theme as any).text, fontWeight: "700", textAlign: "center" }}>Reset</Text>
                 </TouchableOpacity>
               </View>
 
@@ -476,18 +594,22 @@ export default function ProfileScreen() {
             <TouchableOpacity
               style={styles.uploadButton}
               onPress={async () => {
-                const result = await ImagePicker.launchImageLibraryAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  aspect: [1, 1],
-                  quality: 1,
-                });
-                if (!result.canceled && result.assets && result.assets[0]?.uri) {
-                  setNewPlaylistCover(result.assets[0].uri);
+                try {
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 1,
+                  });
+                  if (!result.canceled && result.assets && result.assets[0]?.uri) {
+                    setNewPlaylistCover(result.assets[0].uri);
+                  }
+                } catch (e) {
+                  console.warn("Image pick failed", e);
                 }
               }}
             >
-              <Text style={{ color: "white", fontWeight: "bold" }}>
+              <Text style={{ color: (theme as any).text, fontWeight: "bold" }}>
                 {newPlaylistCover ? "Change Cover Image" : "Upload Cover Image"}
               </Text>
             </TouchableOpacity>
@@ -513,44 +635,3 @@ export default function ProfileScreen() {
     </ScrollView>
   );
 }
-
-// ---------------- Styles -----------------
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "black", padding: 16 },
-  header: { alignItems: "center", marginBottom: 20 },
-  profileImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 10 },
-  profileName: { color: "white", fontSize: 22, fontWeight: "bold" },
-  profileUsername: { color: "#aaa", fontSize: 14 },
-  buttonRow: { flexDirection: "row", justifyContent: "center", marginBottom: 20 },
-  followButton: { backgroundColor: "#1DB954", paddingVertical: 8, paddingHorizontal: 20, borderRadius: 20, marginRight: 10 },
-  moreButton: { backgroundColor: "#333", paddingVertical: 8, paddingHorizontal: 15, borderRadius: 20 },
-  buttonText: { color: "white", fontSize: 14, fontWeight: "bold" },
-  section: { marginBottom: 20 },
-  sectionTitle: { color: "white", fontSize: 18, fontWeight: "bold", marginBottom: 10 },
-  errorText: { color: "red", fontSize: 12, marginTop: 4 },
-  input: { backgroundColor: "#111", color: "white", padding: 10, borderRadius: 8, marginBottom: 12 },
-  submitBtn: { backgroundColor: "#1DB954", paddingVertical: 12, borderRadius: 8 },
-  card: { flexDirection: "row", alignItems: "center", marginBottom: 12, backgroundColor: "#111", padding: 10, borderRadius: 10 },
-  cardImage: { width: 60, height: 60, borderRadius: 4, marginRight: 10 },
-  cardInfo: { flex: 1 },
-  cardTitle: { color: "white", fontSize: 16, fontWeight: "bold" },
-  cardSubtitle: { color: "#aaa", fontSize: 12 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center" },
-  modalContainer: { backgroundColor: "#222", padding: 20, borderRadius: 10, width: "90%", maxWidth: 400, alignSelf: "center" },
-  modalContainerFixed: { backgroundColor: "#222", padding: 20, borderRadius: 10, width: "90%", maxWidth: 400, height: "70%" },
-  uploadButton: { backgroundColor: "#333", padding: 10, borderRadius: 8, alignItems: "center", marginBottom: 12 },
-  genreBtn: { paddingVertical: 6, paddingHorizontal: 12, backgroundColor: "#333", borderRadius: 20 },
-  genreBtnSelected: { backgroundColor: "#1DB954" },
-  genreText: { color: "white" },
-  genreTextSelected: { color: "black", fontWeight: "700" },
-  modalTitle: { color: "white", fontSize: 18, fontWeight: "bold", marginBottom: 15 },
-  modalButtons: { flexDirection: "row", justifyContent: "flex-end", marginTop: 16 },
-  cancelButton: { marginRight: 10 },
-  confirmButton: { backgroundColor: "#1DB954", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8 },
-  modalButtonText: { color: "white", fontSize: 14, fontWeight: "bold" },
-  artistCard: { marginRight: 16, alignItems: "center" },
-artistImage: { width: 80, height: 80, borderRadius: 40 },
-artistName: { color: "white", marginTop: 6 },
-
-  settingsItem: { paddingVertical: 12, borderBottomColor: "#333", borderBottomWidth: 1 },
-});

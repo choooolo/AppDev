@@ -1,35 +1,29 @@
-import React, { useState } from "react";
+import { useThemeColors } from "@/hooks/useThemeColors"; // ✅ global theme hook
+import { RootState } from "@/store";
+import { setDarkMode } from "@/store/themeSlice";
 import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  Switch,
-  TouchableOpacity,
   ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function PrivacySecurityScreen() {
   const router = useRouter();
-  const [darkMode, setDarkMode] = useState(true);
+  const dispatch = useDispatch();
+
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
+  const theme = useThemeColors(); // ✅ use global theme
+
   const [privateSession, setPrivateSession] = useState(false);
   const [listeningActivity, setListeningActivity] = useState(true);
   const [dataSharing, setDataSharing] = useState(false);
   const [personalizedAds, setPersonalizedAds] = useState(true);
-
-  const theme = darkMode
-    ? {
-        background: "black",
-        text: "white",
-        subtext: "#aaa",
-        border: "#222",
-      }
-    : {
-        background: "white",
-        text: "black",
-        subtext: "#555",
-        border: "#ddd",
-      };
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -49,7 +43,7 @@ export default function PrivacySecurityScreen() {
         </View>
         <Switch
           value={darkMode}
-          onValueChange={setDarkMode}
+          onValueChange={(val) => dispatch(setDarkMode(val))}
           trackColor={{ false: "#555", true: "#1DB954" }}
           thumbColor={"#fff"}
         />
@@ -101,14 +95,12 @@ export default function PrivacySecurityScreen() {
             Allow Spotify to share data with partners.
           </Text>
         </View>
-
         <Switch
           value={dataSharing}
           onValueChange={setDataSharing}
           trackColor={{ false: "#555", true: "#1DB954" }}
           thumbColor={"#fff"}
         />
-
       </View>
 
       {/* Personalized Ads */}
@@ -129,7 +121,6 @@ export default function PrivacySecurityScreen() {
         />
       </View>
 
-      {/* Extra Options */}
       {/* Extra Options */}
       <TouchableOpacity style={[styles.option, { borderBottomColor: theme.border }]}>
         <Text style={[styles.optionText, { color: theme.text }]}>
@@ -152,28 +143,19 @@ export default function PrivacySecurityScreen() {
       {/* Logout Option */}
       <TouchableOpacity
         style={[styles.option, { borderBottomColor: theme.border }]}
-        onPress={() => router.push("/spotify")} // 👈 this navigates to spotify.tsx
+        onPress={() => router.push("/spotify")}
       >
         <Text style={[styles.optionText, { color: theme.text }]}>
           Logout
         </Text>
       </TouchableOpacity>
-
-
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 20 },
   settingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -181,23 +163,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  textContainer: {
-    flex: 1,
-    paddingRight: 10,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  settingSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  option: {
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  optionText: {
-    fontSize: 16,
-  },
+  textContainer: { flex: 1, paddingRight: 10 },
+  settingTitle: { fontSize: 16, fontWeight: "500" },
+  settingSubtitle: { fontSize: 12, marginTop: 2 },
+  option: { paddingVertical: 14, borderBottomWidth: 1 },
+  optionText: { fontSize: 16 },
 });

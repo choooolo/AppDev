@@ -1,38 +1,47 @@
 // app/(drawer)/CustomDrawer.tsx
-import React from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { RootState } from "@/store";
+import { darkTheme, lightTheme } from "@/theme";
 import { DrawerContentScrollView, DrawerItemList } from "@react-navigation/drawer";
 import { router } from "expo-router";
+import React from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useSelector } from "react-redux";
+
 export default function CustomDrawer(props: any) {
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
+  const theme = darkMode ? darkTheme : lightTheme;
+
   return (
-    <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
+    <DrawerContentScrollView
+      {...props}
+      contentContainerStyle={{ flex: 1, backgroundColor: theme.background }}
+    >
       {/* Header with Profile */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.primary }]}>
         <Image
           source={{
-            uri: "https://static.wikia.nocookie.net/the-x-factor/images/a/a9/Jamesarthur.jpg/revision/latest?cb=20151123150032", // replace with your profile image
+            uri: "https://static.wikia.nocookie.net/the-x-factor/images/a/a9/Jamesarthur.jpg/revision/latest?cb=20151123150032",
           }}
           style={styles.avatar}
         />
-        <Text style={styles.username}>James Barthur</Text>
-        <Text style={styles.email}>jamesbarthur@email.com</Text>
+        <Text style={[styles.username, { color: theme.text }]}>James Barthur</Text>
+        <Text style={[styles.email, { color: theme.text }]}>jamesbarthur@email.com</Text>
       </View>
 
       {/* Drawer Items */}
-      <View style={{ flex: 1, backgroundColor: "#121212", paddingTop: 10 }}>
+      <View style={{ flex: 1, backgroundColor: theme.background, paddingTop: 10 }}>
         <DrawerItemList {...props} />
       </View>
 
       {/* Logout Button */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: darkMode ? "#333" : "#ccc" }]}>
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={() => {
-            // TODO: clear auth/session if needed
-            router.replace("/spotify"); // redirect to your login page
+            router.replace("/spotify");
           }}
         >
-          <Text style={styles.logoutText}>Log Out</Text>
+          <Text style={[styles.logoutText, { color: theme.primary }]}>Log Out</Text>
         </TouchableOpacity>
       </View>
     </DrawerContentScrollView>
@@ -41,7 +50,6 @@ export default function CustomDrawer(props: any) {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: "#1DB954",
     padding: 20,
     alignItems: "center",
   },
@@ -52,25 +60,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   username: {
-    color: "#fff",
     fontSize: 18,
     fontWeight: "bold",
   },
   email: {
-    color: "#fff",
     fontSize: 14,
     opacity: 0.8,
   },
   footer: {
     padding: 20,
     borderTopWidth: 1,
-    borderTopColor: "#333",
   },
   logoutButton: {
     paddingVertical: 12,
   },
   logoutText: {
-    color: "#1DB954",
     fontSize: 16,
     fontWeight: "bold",
   },
